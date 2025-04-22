@@ -1,0 +1,2362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Página de Inicio Personalizada</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* Colores principales */
+            --primary-color: #4CAF50;
+            --secondary-color: #2196F3;
+            --danger-color: #f44336;
+            --dark-color: #121212;
+            --light-color: #f5f5f5;
+            --overlay-color: rgba(0, 0, 0, 0.7);
+            --icon-color: #ffffff;
+            --folder-color: rgba(255, 255, 255, 0.1);
+            
+            /* Tamaños */
+            --shortcut-size: 100px;
+            --shortcut-icon-size: 60px;
+            --control-button-size: 40px;
+            --music-player-width: 300px;
+            --profile-pic-size: 80px;
+            
+            /* Espaciados */
+            --container-padding: 20px;
+            --element-margin: 10px;
+            --element-padding: 15px;
+            
+            /* Bordes */
+            --border-radius: 10px;
+            --border-radius-circle: 50%;
+            
+            /* Efectos */
+            --blur-effect: blur(8px);
+            --transition-speed: 0.3s;
+            
+            /* Fuentes */
+            --font-main: 'Arial', sans-serif;
+            --font-size-normal: 1rem;
+            --font-size-large: 1.5rem;
+            
+            /* Z-index */
+            --z-video: -1;
+            --z-content: 1;
+            --z-controls: 100;
+            --z-modal: 1000;
+            --z-context-menu: 1001;
+            --z-drag: 1002;
+        }
+        
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: var(--font-main);
+            color: var(--light-color);
+            background-color: var(--dark-color);
+            overflow: hidden;
+        }
+        
+        #video-background {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: var(--z-video);
+            object-fit: cover;
+        }
+        
+        #image-background {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: var(--z-video);
+            object-fit: cover;
+            display: none;
+        }
+        
+        .video-controls {
+            position: fixed;
+            top: var(--container-padding);
+            right: var(--container-padding);
+            z-index: var(--z-controls);
+            display: flex;
+            gap: var(--element-margin);
+        }
+        
+        .video-controls button {
+            background-color: var(--overlay-color);
+            color: var(--light-color);
+            border: none;
+            border-radius: var(--border-radius-circle);
+            width: var(--control-button-size);
+            height: var(--control-button-size);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+        }
+        
+        .video-controls button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+        
+        .main-container {
+            display: grid;
+            grid-template-columns: var(--music-player-width) 1fr;
+            gap: var(--container-padding);
+            height: 100vh;
+            padding: var(--container-padding);
+            box-sizing: border-box;
+        }
+        
+        .shortcuts-container {
+            display: flex;
+            flex-direction: column;
+            padding: var(--element-padding);
+            background-color: var(--overlay-color);
+            border-radius: var(--border-radius);
+            backdrop-filter: var(--blur-effect);
+            position: relative;
+            z-index: var(--z-content);
+            height: calc(100vh - var(--container-padding) * 2);
+            box-sizing: border-box;
+        }
+        
+        .shortcuts-header {
+            margin-bottom: var(--element-margin);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            padding-bottom: var(--element-margin);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .settings-btn {
+            background: none;
+            border: none;
+            color: var(--light-color);
+            font-size: var(--font-size-large);
+            cursor: pointer;
+            transition: all var(--transition-speed);
+        }
+        
+        .settings-btn:hover {
+            color: var(--primary-color);
+            transform: rotate(90deg);
+        }
+        
+        .shortcuts-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(var(--shortcut-size), 1fr));
+            gap: var(--element-margin);
+            align-content: start;
+            overflow-y: auto;
+            padding: 5px;
+        }
+        
+        .shortcut {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: var(--light-color);
+            transition: transform var(--transition-speed);
+            padding: var(--element-margin);
+            border-radius: var(--border-radius);
+            position: relative;
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+        }
+        
+        .shortcut:active {
+            cursor: grabbing;
+        }
+        
+        .shortcut.dragging {
+            opacity: 0.5;
+            transform: scale(1.1);
+            z-index: var(--z-drag);
+        }
+        
+        .shortcut:hover {
+            transform: scale(1.05);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .shortcut.folder {
+            background-color: var(--folder-color);
+        }
+        
+        .shortcut.folder .shortcut-icon {
+            background-color: transparent;
+        }
+        
+        .shortcut-icon {
+            width: var(--shortcut-icon-size);
+            height: var(--shortcut-icon-size);
+            background-color: var(--icon-color);
+            border-radius: var(--border-radius-circle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: var(--element-margin);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .shortcut-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 15%;
+        }
+        
+        .shortcut-icon .letter-fallback {
+            position: absolute;
+            font-size: calc(var(--shortcut-icon-size) * 0.5);
+            font-weight: bold;
+            color: var(--dark-color);
+        }
+        
+        .shortcut-icon .folder-icon {
+            font-size: calc(var(--shortcut-icon-size) * 0.8);
+            color: var(--light-color);
+        }
+        
+        .shortcut-name {
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            font-size: 0.9rem;
+            word-break: break-word;
+            width: 100%;
+        }
+        
+        .shortcut-menu {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            font-size: 1rem;
+            opacity: 0;
+            transition: opacity var(--transition-speed);
+            z-index: 1;
+        }
+        
+        .shortcut:hover .shortcut-menu {
+            opacity: 1;
+        }
+        
+        .context-menu {
+            position: absolute;
+            background-color: var(--overlay-color);
+            backdrop-filter: var(--blur-effect);
+            border-radius: var(--border-radius);
+            padding: 5px 0;
+            z-index: var(--z-context-menu);
+            min-width: 150px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            display: none;
+        }
+        
+        .context-menu button {
+            width: 100%;
+            padding: 8px 15px;
+            text-align: left;
+            background: none;
+            border: none;
+            color: var(--light-color);
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .context-menu button:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .context-menu button i {
+            width: 20px;
+            text-align: center;
+        }
+        
+        .add-shortcut-btn {
+            position: fixed;
+            bottom: var(--container-padding);
+            right: var(--container-padding);
+            width: calc(var(--shortcut-icon-size) + 10px);
+            height: calc(var(--shortcut-icon-size) + 10px);
+            background-color: var(--primary-color);
+            color: var(--light-color);
+            border: none;
+            border-radius: var(--border-radius-circle);
+            font-size: var(--font-size-large);
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            z-index: var(--z-controls);
+            transition: all var(--transition-speed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .add-shortcut-btn:hover {
+            background-color: #45a049;
+            transform: scale(1.1);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: var(--z-modal);
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: var(--overlay-color);
+            padding: var(--element-padding);
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 500px;
+            backdrop-filter: var(--blur-effect);
+        }
+        
+        .modal-content h2 {
+            margin-bottom: var(--element-margin);
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--element-margin);
+        }
+        
+        .modal-content input, .modal-content select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: var(--element-margin);
+            border: none;
+            border-radius: var(--border-radius);
+            background-color: rgba(255, 255, 255, 0.9);
+            font-size: var(--font-size-normal);
+        }
+        
+        .modal-content input[type="color"] {
+            height: 50px;
+            padding: 5px;
+            cursor: pointer;
+        }
+        
+        .modal-content input[type="file"] {
+            padding: 8px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: var(--element-margin);
+            gap: var(--element-margin);
+        }
+        
+        .modal-buttons button {
+            flex: 1;
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            font-size: var(--font-size-normal);
+        }
+        
+        .modal-buttons button:first-child {
+            background-color: var(--primary-color);
+            color: var(--light-color);
+        }
+        
+        .modal-buttons button:last-child {
+            background-color: var(--danger-color);
+            color: var(--light-color);
+        }
+        
+        .modal-buttons button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        .color-preview {
+            width: 30px;
+            height: 30px;
+            border-radius: var(--border-radius-circle);
+            display: inline-block;
+            margin-left: 10px;
+            border: 2px solid var(--light-color);
+        }
+        
+        .music-player {
+            background-color: var(--overlay-color);
+            border-radius: var(--border-radius);
+            padding: var(--element-padding);
+            backdrop-filter: var(--blur-effect);
+            z-index: var(--z-content);
+            height: fit-content;
+            position: sticky;
+            top: var(--container-padding);
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - var(--container-padding) * 2);
+        }
+        
+        .profile-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: var(--element-margin);
+            padding-bottom: var(--element-margin);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .profile-pic {
+            width: var(--profile-pic-size);
+            height: var(--profile-pic-size);
+            border-radius: var(--border-radius-circle);
+            object-fit: cover;
+            margin-bottom: var(--element-margin);
+            background-color: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: calc(var(--profile-pic-size) * 0.5);
+        }
+        
+        .profile-info {
+            text-align: center;
+        }
+        
+        .profile-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .profile-description {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-bottom: var(--element-margin);
+        }
+        
+        .current-time {
+            font-size: 0.9rem;
+            margin-bottom: var(--element-margin);
+        }
+        
+        .music-controls-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .music-player h3 {
+            margin-bottom: var(--element-margin);
+            display: flex;
+            align-items: center;
+            gap: var(--element-margin);
+        }
+        
+        .music-controls {
+            display: flex;
+            align-items: center;
+            gap: var(--element-margin);
+            margin-top: var(--element-margin);
+        }
+        
+        .music-controls button {
+            background-color: transparent;
+            color: var(--light-color);
+            border: none;
+            font-size: var(--font-size-large);
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            width: var(--control-button-size);
+            height: var(--control-button-size);
+            border-radius: var(--border-radius-circle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .music-controls button.active {
+            color: var(--primary-color);
+        }
+        
+        .music-controls button:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--primary-color);
+        }
+        
+        .current-song {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 0.9rem;
+        }
+        
+        .progress-container {
+            width: 100%;
+            height: 5px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            margin-top: var(--element-margin);
+            cursor: pointer;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary-color);
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+        
+        .time-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .playlist-container {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .playlist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--element-margin);
+        }
+        
+        .playlist {
+            flex: 1;
+            overflow-y: auto;
+            border-radius: var(--border-radius);
+            background-color: rgba(0, 0, 0, 0.3);
+        }
+        
+        .playlist-item {
+            padding: 8px 12px;
+            border-radius: 5px;
+            margin: 2px;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            touch-action: none;
+        }
+        
+        .playlist-item.dragging {
+            opacity: 0.5;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .playlist-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .playlist-item.active {
+            background-color: var(--primary-color);
+        }
+        
+        .playlist-item-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .playlist-item-actions button {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all var(--transition-speed);
+        }
+        
+        .playlist-item-actions button:hover {
+            color: var(--light-color);
+        }
+        
+        .folder-content {
+            display: none;
+            position: fixed;
+            background-color: var(--overlay-color);
+            backdrop-filter: var(--blur-effect);
+            border-radius: var(--border-radius);
+            padding: var(--element-padding);
+            z-index: var(--z-modal);
+            width: 80%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .folder-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--element-margin);
+        }
+        
+        .folder-shortcuts {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(var(--shortcut-size), 1fr));
+            gap: var(--element-margin);
+            padding: 5px;
+        }
+        
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .music-player {
+                position: static;
+                margin-bottom: var(--container-padding);
+            }
+            
+            :root {
+                --shortcut-size: 80px;
+                --shortcut-icon-size: 50px;
+                --music-player-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Video de fondo -->
+    <video autoplay muted loop id="video-background">
+        <source src="https://assets.mixkit.co/videos/preview/mixkit-tree-with-yellow-flowers-1173-large.mp4" type="video/mp4">
+    </video>
+    
+    <!-- Imagen de fondo (alternativa) -->
+    <img id="image-background" src="" alt="Background image">
+    
+    <!-- Controles del fondo -->
+    <div class="video-controls">
+        <button id="playPauseBg"><i class="fas fa-pause"></i></button>
+        <button id="muteBg"><i class="fas fa-volume-up"></i></button>
+        <button id="changeBg"><i class="fas fa-image"></i></button>
+    </div>
+    
+    <div class="main-container">
+        <!-- Reproductor de música -->
+        <div class="music-player">
+            <!-- Sección de perfil -->
+            <div class="profile-section">
+                <div class="profile-pic" id="profilePic">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="profile-info">
+                    <div class="profile-name" id="profileName">Usuario</div>
+                    <div class="profile-description" id="profileDescription">Bienvenido a tu página personalizada</div>
+                </div>
+                <div class="current-time" id="currentTimeDisplay">00:00:00</div>
+            </div>
+            
+            <!-- Controles de música -->
+            <div class="music-controls-container">
+                <audio id="audioPlayer" loop></audio>
+                <div class="music-controls">
+                    <button id="prevBtn"><i class="fas fa-step-backward"></i></button>
+                    <button id="playPauseBtn"><i class="fas fa-play"></i></button>
+                    <button id="nextBtn"><i class="fas fa-step-forward"></i></button>
+                    <div class="current-song" id="currentSong">Selecciona una canción</div>
+                    <button id="loopBtn"><i class="fas fa-redo"></i></button>
+                </div>
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div class="time-info">
+                    <span id="currentTime">0:00</span>
+                    <span id="duration">0:00</span>
+                </div>
+                
+                <!-- Lista de reproducción -->
+                <div class="playlist-container">
+                    <div class="playlist-header">
+                        <h3><i class="fas fa-music"></i> Playlist</h3>
+                        <button id="addMusicBtn"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div class="playlist" id="playlist">
+                        <!-- Las canciones se agregarán aquí dinámicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contenedor de accesos directos -->
+        <div class="shortcuts-container">
+            <div class="shortcuts-header">
+                <h1>Mis Accesos Directos</h1>
+                <button class="settings-btn" id="settingsBtn"><i class="fas fa-palette"></i></button>
+            </div>
+            <div class="shortcuts-grid" id="shortcutsContainer">
+                <!-- Los accesos directos se agregarán aquí dinámicamente -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Botón flotante para agregar accesos directos -->
+    <button class="add-shortcut-btn" id="openModalBtn"><i class="fas fa-plus"></i></button>
+    
+    <!-- Modal para agregar accesos directos -->
+    <div class="modal" id="addShortcutModal">
+        <div class="modal-content">
+            <h2><i class="fas fa-plus-circle"></i> Nuevo Acceso Directo</h2>
+            <input type="text" id="shortcutName" placeholder="Nombre del acceso directo">
+            <input type="text" id="shortcutUrl" placeholder="URL (ej: ejemplo.com)">
+            <div class="modal-buttons">
+                <button onclick="addShortcut()">Agregar</button>
+                <button onclick="closeModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para configuración de tema -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <h2><i class="fas fa-palette"></i> Configuración de Tema</h2>
+            
+            <label for="primaryColor">Color principal:</label>
+            <div style="display: flex; align-items: center; margin-bottom: var(--element-margin);">
+                <input type="color" id="primaryColor" value="#4CAF50">
+                <span class="color-preview" id="primaryColorPreview" style="background-color: #4CAF50;"></span>
+            </div>
+            
+            <label for="iconColor">Color de iconos:</label>
+            <div style="display: flex; align-items: center; margin-bottom: var(--element-margin);">
+                <input type="color" id="iconColor" value="#ffffff">
+                <span class="color-preview" id="iconColorPreview" style="background-color: #ffffff;"></span>
+            </div>
+            
+            <div class="modal-buttons">
+                <button onclick="saveThemeSettings()">Guardar</button>
+                <button onclick="closeSettingsModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para cambiar fondo -->
+    <div class="modal" id="bgModal">
+        <div class="modal-content">
+            <h2><i class="fas fa-image"></i> Cambiar Fondo</h2>
+            
+            <select id="bgTypeSelect">
+                <option value="video">Video</option>
+                <option value="image">Imagen</option>
+                <option value="gif">GIF</option>
+            </select>
+            
+            <div id="videoBgOptions">
+                <input type="file" id="videoUpload" accept="video/*">
+                <p>O usar URL:</p>
+                <input type="text" id="videoUrl" placeholder="URL de video (ej: https://ejemplo.com/video.mp4)">
+            </div>
+            
+            <div id="imageBgOptions" style="display: none;">
+                <input type="file" id="imageUpload" accept="image/*">
+                <p>O usar URL:</p>
+                <input type="text" id="imageUrl" placeholder="URL de imagen (ej: https://ejemplo.com/imagen.jpg)">
+            </div>
+            
+            <div id="gifBgOptions" style="display: none;">
+                <input type="file" id="gifUpload" accept="image/gif">
+                <p>O usar URL:</p>
+                <input type="text" id="gifUrl" placeholder="URL de GIF (ej: https://ejemplo.com/imagen.gif)">
+            </div>
+            
+            <div class="modal-buttons">
+                <button onclick="saveBackground()">Aplicar</button>
+                <button onclick="closeBgModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para editar acceso directo -->
+    <div class="modal" id="editShortcutModal">
+        <div class="modal-content">
+            <h2><i class="fas fa-edit"></i> Editar Acceso Directo</h2>
+            <input type="text" id="editShortcutName" placeholder="Nombre">
+            <input type="text" id="editShortcutUrl" placeholder="URL">
+            
+            <div style="margin: var(--element-margin) 0;">
+                <label for="editIconType">Tipo de icono:</label>
+                <select id="editIconType" onchange="toggleIconOptions()">
+                    <option value="favicon">Favicon automático</option>
+                    <option value="custom">Icono personalizado</option>
+                    <option value="letter">Letra inicial</option>
+                    <option value="folder">Carpeta</option>
+                </select>
+            </div>
+            
+            <div id="customIconOptions" style="display: none;">
+                <input type="file" id="iconUpload" accept="image/*">
+                <p>O usar URL:</p>
+                <input type="text" id="iconUrl" placeholder="URL de icono (ej: https://ejemplo.com/icono.png)">
+            </div>
+            
+            <div class="modal-buttons">
+                <button onclick="saveShortcutChanges()">Guardar</button>
+                <button onclick="closeEditModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para agregar música -->
+    <div class="modal" id="addMusicModal">
+        <div class="modal-content">
+            <h2><i class="fas fa-music"></i> Agregar Música</h2>
+            <input type="text" id="musicTitle" placeholder="Título de la canción">
+            <input type="file" id="musicUpload" accept="audio/*">
+            <p>O usar URL:</p>
+            <input type="text" id="musicUrl" placeholder="URL de audio (ej: https://ejemplo.com/cancion.mp3)">
+            <div class="modal-buttons">
+                <button onclick="addMusicToPlaylist()">Agregar</button>
+                <button onclick="closeMusicModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para editar música -->
+    <div class="modal" id="editMusicModal">
+        <div class="modal-content">
+            <h2><i class="fas fa-edit"></i> Editar Canción</h2>
+            <input type="text" id="editMusicTitle" placeholder="Título de la canción">
+            <div class="modal-buttons">
+                <button onclick="saveMusicChanges()">Guardar</button>
+                <button onclick="closeEditMusicModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para editar perfil -->
+    <div class="modal" id="editProfileModal">
+        <div class="modal-content">
+            <h2><i class="fas fa-user-edit"></i> Editar Perfil</h2>
+            <input type="text" id="editProfileName" placeholder="Nombre de usuario">
+            <input type="text" id="editProfileDesc" placeholder="Descripción">
+            <input type="file" id="profilePicUpload" accept="image/*">
+            <p>O usar URL:</p>
+            <input type="text" id="profilePicUrl" placeholder="URL de imagen de perfil">
+            <div class="modal-buttons">
+                <button onclick="saveProfileChanges()">Guardar</button>
+                <button onclick="closeEditProfileModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Contenido de carpeta -->
+    <div class="folder-content" id="folderContent">
+        <div class="folder-header">
+            <h2 id="folderTitle"><i class="fas fa-folder"></i> Carpeta</h2>
+            <button onclick="closeFolder()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="shortcuts-grid folder-shortcuts" id="folderShortcuts">
+            <!-- Los accesos directos de la carpeta se mostrarán aquí -->
+        </div>
+    </div>
+    
+    <!-- Menú contextual para accesos directos -->
+    <div class="context-menu" id="shortcutContextMenu">
+        <button onclick="editShortcut()"><i class="fas fa-edit"></i> Editar nombre</button>
+        <button onclick="editShortcutUrl()"><i class="fas fa-link"></i> Editar URL</button>
+        <button onclick="editShortcutIcon()"><i class="fas fa-image"></i> Cambiar icono</button>
+        <button onclick="createFolderWithShortcut()"><i class="fas fa-folder-plus"></i> Mover a carpeta</button>
+        <button onclick="deleteCurrentShortcut()" style="color: var(--danger-color);"><i class="fas fa-trash"></i> Eliminar</button>
+    </div>
+
+    <script>
+        // Variables globales
+        let currentVideoPlaying = true;
+        let currentVideoMuted = true;
+        let currentSongIndex = 0;
+        let isPlaying = false;
+        let isLooping = false;
+        let audioContext;
+        let currentShortcutId = null;
+        let currentMusicId = null;
+        let currentContextMenu = null;
+        let currentFolderId = null;
+        let draggedShortcut = null;
+        let draggedMusic = null;
+        let dropTarget = null;
+        
+        // Cargar elementos al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            loadThemeSettings();
+            loadBackgroundSettings();
+            loadProfileSettings();
+            loadShortcuts();
+            setupVideoControls();
+            setupMusicPlayer();
+            setupDragAndDrop();
+            setupPlaylistDragAndDrop();
+            loadPlaylist();
+            setupModal();
+            setupContextMenu();
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // Configurar eventos para cambiar tipo de fondo
+            document.getElementById('bgTypeSelect').addEventListener('change', function() {
+                const type = this.value;
+                document.getElementById('videoBgOptions').style.display = type === 'video' ? 'block' : 'none';
+                document.getElementById('imageBgOptions').style.display = type === 'image' ? 'block' : 'none';
+                document.getElementById('gifBgOptions').style.display = type === 'gif' ? 'block' : 'none';
+            });
+            
+            // Configurar botón de loop
+            document.getElementById('loopBtn').addEventListener('click', function() {
+                isLooping = !isLooping;
+                document.getElementById('audioPlayer').loop = isLooping;
+                this.classList.toggle('active', isLooping);
+            });
+            
+            // Permitir editar perfil al hacer clic en la foto
+            document.getElementById('profilePic').addEventListener('click', openEditProfileModal);
+        });
+        
+        // ===== FUNCIONES PARA EL RELOJ =====
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('currentTimeDisplay').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+        
+        // ===== FUNCIONES PARA EL PERFIL =====
+        function openEditProfileModal() {
+            const profileName = localStorage.getItem('profileName') || 'Usuario';
+            const profileDesc = localStorage.getItem('profileDesc') || 'Bienvenido a tu página personalizada';
+            
+            document.getElementById('editProfileName').value = profileName;
+            document.getElementById('editProfileDesc').value = profileDesc;
+            document.getElementById('editProfileModal').style.display = 'flex';
+        }
+        
+        function closeEditProfileModal() {
+            document.getElementById('editProfileModal').style.display = 'none';
+        }
+        
+        function saveProfileChanges() {
+            const name = document.getElementById('editProfileName').value.trim() || 'Usuario';
+            const desc = document.getElementById('editProfileDesc').value.trim() || 'Bienvenido a tu página personalizada';
+            const fileInput = document.getElementById('profilePicUpload');
+            const urlInput = document.getElementById('profilePicUrl').value.trim();
+            
+            localStorage.setItem('profileName', name);
+            localStorage.setItem('profileDesc', desc);
+            
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const imageURL = URL.createObjectURL(file);
+                localStorage.setItem('profilePic', imageURL);
+            } else if (urlInput) {
+                localStorage.setItem('profilePic', urlInput);
+            }
+            
+            loadProfileSettings();
+            closeEditProfileModal();
+        }
+        
+        function loadProfileSettings() {
+            const profileName = localStorage.getItem('profileName') || 'Usuario';
+            const profileDesc = localStorage.getItem('profileDesc') || 'Bienvenido a tu página personalizada';
+            const profilePic = localStorage.getItem('profilePic');
+            
+            document.getElementById('profileName').textContent = profileName;
+            document.getElementById('profileDescription').textContent = profileDesc;
+            
+            const profilePicElement = document.getElementById('profilePic');
+            if (profilePic) {
+                if (profilePic.startsWith('blob:')) {
+                    profilePicElement.innerHTML = `<img src="${profilePic}" alt="Foto de perfil" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                } else {
+                    profilePicElement.innerHTML = `<img src="${profilePic}" alt="Foto de perfil" onerror="this.parentElement.innerHTML='<i class=\'fas fa-user\'></i>'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                }
+            } else {
+                profilePicElement.innerHTML = '<i class="fas fa-user"></i>';
+            }
+        }
+        
+        // ===== FUNCIONES PARA DRAG & DROP =====
+        function setupDragAndDrop() {
+            const shortcutsContainer = document.getElementById('shortcutsContainer');
+            
+            // Eventos para los accesos directos
+            document.querySelectorAll('.shortcut').forEach(shortcut => {
+                shortcut.addEventListener('dragstart', handleDragStart);
+                shortcut.addEventListener('dragend', handleDragEnd);
+            });
+            
+            // Eventos para el contenedor
+            shortcutsContainer.addEventListener('dragover', handleDragOver);
+            shortcutsContainer.addEventListener('dragenter', handleDragEnter);
+            shortcutsContainer.addEventListener('dragleave', handleDragLeave);
+            shortcutsContainer.addEventListener('drop', handleDrop);
+            
+            // Actualizar cuando se agreguen nuevos accesos directos
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.classList && node.classList.contains('shortcut')) {
+                            node.addEventListener('dragstart', handleDragStart);
+                            node.addEventListener('dragend', handleDragEnd);
+                        }
+                    });
+                });
+            });
+            
+            observer.observe(shortcutsContainer, { childList: true });
+        }
+        
+        function handleDragStart(e) {
+            draggedShortcut = this;
+            this.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', this.dataset.id);
+            e.dataTransfer.effectAllowed = 'move';
+        }
+        
+        function handleDragEnd() {
+            this.classList.remove('dragging');
+            draggedShortcut = null;
+        }
+        
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            
+            // Encontrar el elemento sobre el que estamos pasando
+            const afterElement = getDragAfterElement(this, e.clientY);
+            dropTarget = afterElement ? afterElement : null;
+        }
+        
+        function handleDragEnter(e) {
+            e.preventDefault();
+        }
+        
+        function handleDragLeave() {
+            // Puedes añadir estilos si lo deseas
+        }
+        
+        function handleDrop(e) {
+            e.preventDefault();
+            if (!draggedShortcut) return;
+            
+            const id = e.dataTransfer.getData('text/plain');
+            const shortcut = document.querySelector(`[data-id="${id}"]`);
+            
+            // Verificar si estamos soltando sobre una carpeta
+            if (dropTarget && dropTarget.classList.contains('shortcut')) {
+                if (dropTarget.classList.contains('folder')) {
+                    // Agregar a carpeta
+                    addShortcutToFolder(id, dropTarget.dataset.id);
+                    return;
+                } else if (dropTarget.dataset.id === shortcut.dataset.id) {
+                    // No hacer nada si es el mismo elemento
+                    return;
+                }
+            }
+            
+            // Reordenar en el contenedor principal
+            const afterElement = getDragAfterElement(this, e.clientY);
+            const container = this;
+            
+            if (afterElement == null) {
+                container.appendChild(shortcut);
+            } else {
+                container.insertBefore(shortcut, afterElement);
+            }
+            
+            // Guardar el nuevo orden
+            saveShortcutsOrder();
+        }
+        
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.shortcut:not(.dragging)')];
+            
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+        
+        function saveShortcutsOrder() {
+            const shortcuts = [];
+            document.querySelectorAll('#shortcutsContainer .shortcut').forEach((shortcut, index) => {
+                const id = shortcut.dataset.id;
+                shortcuts.push({ id, order: index });
+            });
+            
+            // Actualizar localStorage con el nuevo orden
+            let allShortcuts = JSON.parse(localStorage.getItem('shortcuts')) || [];
+            allShortcuts.forEach(shortcut => {
+                const newOrder = shortcuts.find(s => s.id === shortcut.id);
+                if (newOrder) {
+                    shortcut.order = newOrder.order;
+                }
+            });
+            
+            localStorage.setItem('shortcuts', JSON.stringify(allShortcuts));
+        }
+        
+        // Drag & Drop para la playlist
+        function setupPlaylistDragAndDrop() {
+            const playlist = document.getElementById('playlist');
+            
+            playlist.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                
+                const afterElement = getDragAfterPlaylistElement(this, e.clientY);
+                dropTarget = afterElement ? afterElement : null;
+            });
+            
+            playlist.addEventListener('drop', function(e) {
+                e.preventDefault();
+                if (!draggedMusic) return;
+                
+                const id = e.dataTransfer.getData('text/plain');
+                const musicItem = document.querySelector(`[data-id="${id}"]`);
+                
+                const afterElement = getDragAfterPlaylistElement(this, e.clientY);
+                
+                if (afterElement == null) {
+                    playlist.appendChild(musicItem);
+                } else {
+                    playlist.insertBefore(musicItem, afterElement);
+                }
+                
+                savePlaylistOrder();
+            });
+        }
+        
+        function getDragAfterPlaylistElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.playlist-item:not(.dragging)')];
+            
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+        
+        function savePlaylistOrder() {
+            const playlist = [];
+            document.querySelectorAll('#playlist .playlist-item').forEach((item, index) => {
+                const id = item.dataset.id;
+                playlist.push({ id, order: index });
+            });
+            
+            // Actualizar localStorage con el nuevo orden
+            let allSongs = JSON.parse(localStorage.getItem('playlist')) || [];
+            allSongs.forEach(song => {
+                const newOrder = playlist.find(s => s.id === song.id);
+                if (newOrder) {
+                    song.order = newOrder.order;
+                }
+            });
+            
+            // Ordenar según el nuevo orden
+            allSongs.sort((a, b) => a.order - b.order);
+            localStorage.setItem('playlist', JSON.stringify(allSongs));
+            
+            // Actualizar el índice de la canción actual si es necesario
+            const audio = document.getElementById('audioPlayer');
+            if (audio.src) {
+                const currentSong = allSongs.find(song => song.src === audio.src);
+                if (currentSong) {
+                    currentSongIndex = allSongs.indexOf(currentSong);
+                }
+            }
+        }
+        
+        // ===== FUNCIONES PARA CARPETAS =====
+        function createFolderWithShortcut() {
+            if (!currentShortcutId) return;
+            
+            const shortcuts = JSON.parse(localStorage.getItem('shortcuts')) || [];
+            const shortcut = shortcuts.find(s => s.id === currentShortcutId);
+            
+            if (shortcut) {
+                // Crear nueva carpeta
+                const folderId = 'folder-' + Date.now();
+                const folderName = 'Nueva Carpeta';
+                
+                const folderData = {
+                    id: folderId,
+                    name: folderName,
+                    isFolder: true,
+                    shortcuts: [shortcut.id],
+                    order: shortcuts.length
+                };
+                
+                // Agregar la carpeta a la lista de accesos directos
+                shortcuts.push(folderData);
+                
+                // Eliminar el acceso directo original
+                const index = shortcuts.findIndex(s => s.id === shortcut.id);
+                if (index !== -1) {
+                    shortcuts.splice(index, 1);
+                }
+                
+                // Guardar en localStorage
+                localStorage.setItem('shortcuts', JSON.stringify(shortcuts));
+                
+                // Recargar los accesos directos
+                loadShortcuts();
+            }
+            
+            if (currentContextMenu) {
+                currentContextMenu.style.display = 'none';
+                currentContextMenu = null;
+            }
+        }
+        
+        function addShortcutToFolder(shortcutId, folderId) {
+            const shortcuts = JSON.parse(localStorage.getItem('shortcuts')) || [];
+            const folder = shortcuts.find(s => s.id === folderId && s.isFolder);
+            const shortcut = shortcuts.find(s => s.id === shortcutId);
+            
+            if (folder && shortcut) {
+                // Agregar el acceso directo a la carpeta
+                if (!folder.shortcuts.includes(shortcutId)) {
+                    folder.shortcuts.push(shortcutId);
+                }
+                
+                // Eliminar el acceso directo del contenedor principal
+                const index = shortcuts.findIndex(s => s.id === shortcutId);
+                if (index !== -1) {
+                    shortcuts.splice(index, 1);
+                }
+                
+                // Guardar en localStorage
+                localStorage.setItem('shortcuts', JSON.stringify(shortcuts));
+                
+                // Recargar los accesos directos
+                loadShortcuts();
+            }
+        }
+        
+        function openFolder(folderId) {
+            const shortcuts = JSON.parse(localStorage.getItem('shortcuts')) || [];
+            const folder = shortcuts.find(s => s.id === folderId && s.isFolder);
+            
+            if (folder) {
+                currentFolderId = folderId;
+                document.getElementById('folderTitle').innerHTML = `<i class="fas fa-folder"></i> ${folder.name}`;
+                document.getElementById('folderContent').style.display = 'block';
+                
+                // Cargar los accesos directos de la carpeta
+                const folderShortcuts = document.getElementById('folderShortcuts');
+                folderShortcuts.innerHTML = '';
+                
+                folder.shortcuts.forEach(shortcutId => {
+                    const shortcut = shortcuts.find(s => s.id === shortcutId);
+                    if (shortcut) {
+                        const shortcutElement = document.createElement('a');
+                        shortcutElement.className = 'shortcut';
+                        shortcutElement.href = shortcut.url || '#';
+                        shortcutElement.target = '_blank';
+                        shortcutElement.dataset.id = shortcut.id;
+                        shortcutElement.draggable = true;
+                        
+                        let iconContent = '';
+                        if (shortcut.customIcon) {
+                            iconContent = `<img src="${shortcut.customIcon}" alt="${shortcut.name}">`;
+                        } else if (shortcut.useLetter) {
+                            iconContent = `<span class="letter-fallback">${shortcut.name.charAt(0).toUpperCase()}</span>`;
+                        } else if (shortcut.favicon) {
+                            iconContent = `<img src="${shortcut.favicon}" alt="${shortcut.name}" onerror="this.parentElement.innerHTML = '<span class=\'letter-fallback\'>${shortcut.name.charAt(0).toUpperCase()}</span>'">`;
+                        } else {
+                            iconContent = `<span class="letter-fallback">${shortcut.name.charAt(0).toUpperCase()}</span>`;
+                        }
+                        
+                        shortcutElement.innerHTML = `
+                            <div class="shortcut-icon">
+                                ${iconContent}
+                            </div>
+                            <span class="shortcut-name">${shortcut.name}</span>
+                            <button class="shortcut-menu" onclick="showContextMenu(event, '${shortcut.id}')"><i class="fas fa-ellipsis-v"></i></button>
+                        `;
+                        
+                        shortcutElement.addEventListener('dragstart', handleDragStart);
+                        shortcutElement.addEventListener('dragend', handleDragEnd);
+                        
+                        folderShortcuts.appendChild(shortcutElement);
+                    }
+                });
+            }
+        }
+        
+        function closeFolder() {
+            document.getElementById('folderContent').style.display = 'none';
+            currentFolderId = null;
+        }
+        
+        function saveFolderChanges() {
+            if (!currentFolderId) return;
+            
+            const newName = document.getElementById('editFolderName').value.trim();
+            if (!newName) return;
+            
+            const shortcuts = JSON.parse(localStorage.getItem('shortcuts')) || [];
+            const folder = shortcuts.find(s => s.id === currentFolderId && s.isFolder);
+            
+            if (folder) {
+                folder.name = newName;
+                localStorage.setItem('shortcuts', JSON.stringify(shortcuts));
+                loadShortcuts();
+                
+                if (document.getElementById('folderContent').style.display === 'block') {
+                    document.getElementById('folderTitle').innerHTML = `<i class="fas fa-folder"></i> ${newName}`;
+                }
+            }
+            
+            closeEditFolderModal();
+        }
+        
+        // ===== FUNCIONES PARA EL FONDO =====
+        function setupVideoControls() {
+            const video = document.getElementById('video-background');
+            const image = document.getElementById('image-background');
+            const playPauseBtn = document.getElementById('playPauseBg');
+            const muteBtn = document.getElementById('muteBg');
+            const changeBgBtn = document.getElementById('changeBg');
+            
+            playPauseBtn.addEventListener('click', function() {
+                if (video.style.display !== 'none') {
+                    if (currentVideoPlaying) {
+                        video.pause();
+                        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                    } else {
+                        video.play();
+                        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                    }
+                    currentVideoPlaying = !currentVideoPlaying;
+                }
+            });
+            
+            muteBtn.addEventListener('click', function() {
+                if (video.style.display !== 'none') {
+                    if (currentVideoMuted) {
+                        video.muted = false;
+                        muteBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+                    } else {
+                        video.muted = true;
+                        muteBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+                    }
+                    currentVideoMuted = !currentVideoMuted;
+                }
+            });
+            
+            changeBgBtn.addEventListener('click', function() {
+                openBgModal();
+            });
+        }
+        
+        function openBgModal() {
+            document.getElementById('bgModal').style.display = 'flex';
+        }
+        
+        function closeBgModal() {
+            document.getElementById('bgModal').style.display = 'none';
+        }
+        
+        function saveBackground() {
+            const type = document.getElementById('bgTypeSelect').value;
+            const video = document.getElementById('video-background');
+            const image = document.getElementById('image-background');
+            
+            if (type === 'video') {
+                const fileInput = document.getElementById('videoUpload');
+                const urlInput = document.getElementById('videoUrl').value.trim();
+                
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const videoURL = URL.createObjectURL(file);
+                    video.src = videoURL;
+                    localStorage.setItem('backgroundType', 'video');
+                    localStorage.setItem('backgroundVideo', videoURL);
+                } else if (urlInput) {
+                    video.src = urlInput;
+                    localStorage.setItem('backgroundType', 'video');
+                    localStorage.setItem('backgroundVideo', urlInput);
+                }
+                
+                video.style.display = 'block';
+                image.style.display = 'none';
+                video.play();
+            } 
+            else if (type === 'image' || type === 'gif') {
+                const fileInput = type === 'image' ? document.getElementById('imageUpload') : document.getElementById('gifUpload');
+                const urlInput = type === 'image' ? document.getElementById('imageUrl').value.trim() : document.getElementById('gifUrl').value.trim();
+                
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const imageURL = URL.createObjectURL(file);
+                    image.src = imageURL;
+                    localStorage.setItem('backgroundType', type);
+                    localStorage.setItem('backgroundImage', imageURL);
+                } else if (urlInput) {
+                    image.src = urlInput;
+                    localStorage.setItem('backgroundType', type);
+                    localStorage.setItem('backgroundImage', urlInput);
+                }
+                
+                video.style.display = 'none';
+                image.style.display = 'block';
+            }
+            
+            closeBgModal();
+        }
+        
+        function loadBackgroundSettings() {
+            const type = localStorage.getItem('backgroundType') || 'video';
+            const video = document.getElementById('video-background');
+            const image = document.getElementById('image-background');
+            
+            if (type === 'video') {
+                const videoUrl = localStorage.getItem('backgroundVideo') || 'https://assets.mixkit.co/videos/preview/mixkit-tree-with-yellow-flowers-1173-large.mp4';
+                video.src = videoUrl;
+                video.style.display = 'block';
+                image.style.display = 'none';
+            } else {
+                const imageUrl = localStorage.getItem('backgroundImage') || '';
+                if (imageUrl) {
+                    image.src = imageUrl;
+                    video.style.display = 'none';
+                    image.style.display = 'block';
+                }
+            }
+        }
+        
+        // ===== FUNCIONES PARA EL TEMA =====
+        function openSettingsModal() {
+            document.getElementById('settingsModal').style.display = 'flex';
+        }
+        
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+        
+        function saveThemeSettings() {
+            const primaryColor = document.getElementById('primaryColor').value;
+            const iconColor = document.getElementById('iconColor').value;
+            
+            // Actualizar variables CSS
+            document.documentElement.style.setProperty('--primary-color', primaryColor);
+            document.documentElement.style.setProperty('--icon-color', iconColor);
+            
+            // Actualizar previews
+            document.getElementById('primaryColorPreview').style.backgroundColor = primaryColor;
+            document.getElementById('iconColorPreview').style.backgroundColor = iconColor;
+            
+            // Guardar en localStorage
+            localStorage.setItem('primaryColor', primaryColor);
+            localStorage.setItem('iconColor', iconColor);
+            
+            // Actualizar iconos de accesos directos
+            updateShortcutIcons();
+            
+            closeSettingsModal();
+        }
+        
+        function loadThemeSettings() {
+            const primaryColor = localStorage.getItem('primaryColor') || '#4CAF50';
+            const iconColor = localStorage.getItem('iconColor') || '#ffffff';
+            
+            document.documentElement.style.setProperty('--primary-color', primaryColor);
+            document.documentElement.style.setProperty('--icon-color', iconColor);
+            
+            document.getElementById('primaryColor').value = primaryColor;
+            document.getElementById('iconColor').value = iconColor;
+            
+            document.getElementById('primaryColorPreview').style.backgroundColor = primaryColor;
+            document.getElementById('iconColorPreview').style.backgroundColor = iconColor;
+        }
+        
+        // ===== FUNCIONES PARA LOS ACCESOS DIRECTOS =====
+        function setupModal() {
+            const modal = document.getElementById('addShortcutModal');
+            const openBtn = document.getElementById('openModalBtn');
+            const settingsBtn = document.getElementById('settingsBtn');
+            const addMusicBtn = document.getElementById('addMusicBtn');
+            
+            openBtn.addEventListener('click', openModal);
+            settingsBtn.addEventListener('click', openSettingsModal);
+            addMusicBtn.addEventListener('click', openMusicModal);
+            
+            // Cerrar modales al hacer clic fuera del contenido
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        function setupContextMenu() {
+            document.addEventListener('click', function() {
+                if (currentContextMenu) {
+                    currentContextMenu.style.display = 'none';
+                    currentContextMenu = null;
+                }
+            });
+        }
+        
+        function openModal() {
+            document.getElementById('addShortcutModal').style.display = 'flex';
+            document.getElementById('shortcutName').focus();
+        }
+        
+        function closeModal() {
+            document.getElementById('addShortcutModal').style.display = 'none';
+            document.getElementById('shortcutName').value = '';
+            document.getElementById('shortcutUrl').value = '';
+        }
+        
+        function openEditModal(shortcutId) {
+            currentShortcutId = shortcutId;
+            const shortcuts = JSON.parse(localStorage.getItem('shortcuts')) || [];
+            const shortcut = shortcuts.find(s => s.id === shortcutId);
+            
+            if (shortcut) {
+                document.getElementById('editShortcutName').value = shortcut.name;
+                document.getElementById('editShortcutUrl').value = shortcut.url || '';
+                
+                // Determinar tipo de icono
+                let iconType = 'favicon';
+                if (shortcut.isFolder) iconType = 'folder';
+                else if (shortcut.customIcon) iconType = 'custom';
+                else if (shortcut.useLetter) iconType = 'letter';
+                
+                document.getElementById('editIconType').value = iconType;
+                toggleIconOptions();
+                
+                document.getElementById('editShortcutModal').style.display = 'flex';
+            }
+        }
+        
+        function closeEditModal() {
+            document.getElementById('editShortcutModal').style.display = 'none';
+            currentShortcutId = null;
+        }
+        
+        function toggleIconOptions() {
+            const iconType = document.getElementById('editIconType').value;
+            document.getElementById('customIconOptions').style.display = iconType === 'custom' ? 'block' : 'none';
+        }
+        
+        function showContextMenu(event, shortcutId) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            if (currentContextMenu) {
+                currentContextMenu.style.display = 'none';
+            }
+            
+            currentContextMenu = document.getElementById('shortcutContextMenu');
+            currentShortcutId = shortcutId;
+            
+            currentContextMenu.style.display = 'block';
+            currentContextMenu.style.left = `${event.pageX}px`;
+            currentContextMenu.style.top = `${event.pageY}px`;
+        }
+        
+        function editShortcut() {
+            if (currentShortcutId) {
+                openEditModal(currentShortcutId);
+            }
+        }
+        
+        function editShortcutUrl() {
+            if (currentShortcutId) {
+                openEditModal(currentShortcutId);
+                document.getElementById('editShortcutUrl').focus();
+            }
+        }
+        
+        function editShortcutIcon() {
+            if (currentShortcutId) {
+                openEditModal(currentShortcutId);
+                document.getElementById('editIconType').value = 'custom';
+                toggleIconOptions();
+            }
+        }
+        
+        function deleteCurrentShortcut() {
+            if (currentShortcutId) {
+                const shortcutElement = document.querySelector(`.shortcut[data-id="${currentShortcutId}"]`);
+                if (shortcutElement) {
+                    if (confirm('¿Eliminar este acceso directo?')) {
+                        shortcutElement.remove();
+                        removeShortcut(currentShortcutId);
+                    }
+                }
+                if (currentContextMenu) {
+                    currentContextMenu.style.display = 'none';
+                    currentContextMenu = null;
+                }
+                currentShortcutId = null;
+            }
+        }
+        
+        // Función para obtener un favicon de mejor calidad
+        async function getFavicon(url) {
+            if (!url) return null;
+            
+            const domain = new URL(url.startsWith('http') ? url : `https://${url}`).hostname;
+            
+            // Intentar con varios métodos para obtener el mejor favicon
+            const faviconUrls = [
+                `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
+                `https://icons.duckduckgo.com/ip2/${domain}.ico`,
+                `https://${domain}/favicon.ico`,
+                `https://www.${domain}/favicon.ico`
+            ];
+            
+            // Probar cada URL hasta encontrar una que funcione
+            for (const faviconUrl of faviconUrls) {
+                try {
+                    const response = await fetch(faviconUrl, { method: 'HEAD' });
+                    if (response.ok) {
+                        return faviconUrl;
+                    }
+                } catch (e) {
+                    continue;
+                }
+            }
+            
+            return null;
+        }
+        
+        // Función para agregar un nuevo acceso directo
+        async function addShortcut() {
+            const name = document.getElementById('shortcutName').value.trim();
+            const urlInput = document.getElementById('shortcutUrl').value.trim();
+            
+            if (!name) {
+                alert('Por favor ingresa un nombre');
+                return;
+            }
+            
+            try {
+                // Formatear la URL correctamente si existe
+                let url = '';
+                if (urlInput) {
+                    url = urlInput.startsWith('http') ? urlInput : `https://${urlInput}`;
+                }
+                
+                // Obtener el favicon si hay URL
+                const faviconUrl = url ? await getFavicon(url) : null;
+                
+                // Crear el elemento del acceso directo
+                const shortcutId = 'shortcut-' + Date.now();
+                const shortcutElement = document.createElement('a');
+                shortcutElement.className = 'shortcut';
+                shortcutElement.href = url || '#';
+                shortcutElement.target = '_blank';
+                shortcutElement.dataset.id = shortcutId;
+                shortcutElement.draggable = true;
+                
+                // Contenido del acceso directo
+                shortcutElement.innerHTML = `
+                    <div class="shortcut-icon">
+                        ${faviconUrl ? 
+                            `<img src="${faviconUrl}" alt="${name}" onerror="this.parentElement.innerHTML = '<span class=\'letter-fallback\'>${name.charAt(0).toUpperCase()}</span>'">` : 
+                            `<span class="letter-fallback">${name.charAt(0).toUpperCase()}</span>`
+                        }
+                    </div>
+                    <span class="shortcut-name">${name}</span>
+                    <button class="shortcut-menu" onclick="showContextMenu(event, '${shortcutId}')"><i class="fas fa-ellipsis-v"></i></button>
+                `;
+                
+                document.getElementById('shortcutsContainer').appendChild(shortcutElement);
+                
+                // Guardar en localStorage
+                saveShortcut(shortcutId, name, url, faviconUrl);
+                
+                // Configurar eventos de drag & drop
+                shortcutElement.addEventListener('dragstart', handleDragStart);
+                shortcutElement.addEventListener('dragend', handleDragEnd);
+                
+                // Cerrar el modal y limpiar los campos
+                closeModal();
+            } catch (error) {
+                console.error('Error al agregar acceso directo:', error);
+                alert('Ocurrió un error al agregar el acceso directo');
+            }
+        }
+        
+        function saveShortcutChanges() {
+            const name = document.getElementById('editShortcutName').value.trim();
+            const url = document.getElementById('editShortcutUrl').value.trim();
+            const iconType = document.getElementById('editIconType').value;
+            
+            if (!name) {
+                alert('Por favor ingresa un nombre');
+                return;
+            }
+            
+            // Actualizar en el DOM
+            const shortcutElement = document.querySelector(`.shortcut[data-id="${currentShortcutId}"]`);
+            if (shortcutElement) {
+                shortcutElement.href = url || '#';
+                shortcutElement.querySelector('.shortcut-name').textContent = name;
+                
+                const iconContainer = shortcutElement.querySelector('.shortcut-icon');
+                
+                if (iconType === 'folder') {
+                    // Convertir en carpeta
+                    shortcutElement.classList.add('folder');
+                    iconContainer.innerHTML = '<i class="fas fa-folder folder-icon"></i>';
+                    shortcutElement.addEventListener('click', function(e) {
+                        if (!e.target.classList.contains('shortcut-menu')) {
+                            openFolder(currentShortcutId);
+                        }
+                    });
+                    
+                    updateShortcutInStorage(currentShortcutId, name, url, null, false, false, true);
+                } 
+                else if (iconType === 'custom') {
+                    // Icono personalizado
+                    shortcutElement.classList.remove('folder');
+                    const fileInput = document.getElementById('iconUpload');
+                    const urlInput = document.getElementById('iconUrl').value.trim();
+                    
+                    if (fileInput.files.length > 0) {
+                        const file = fileInput.files[0];
+                        const iconURL = URL.createObjectURL(file);
+                        iconContainer.innerHTML = `<img src="${iconURL}" alt="${name}">`;
+                        updateShortcutInStorage(currentShortcutId, name, url, iconURL, true, false, false);
+                    } else if (urlInput) {
+                        iconContainer.innerHTML = `<img src="${urlInput}" alt="${name}" onerror="this.parentElement.innerHTML = '<span class=\'letter-fallback\'>${name.charAt(0).toUpperCase()}</span>'">`;
+                        updateShortcutInStorage(currentShortcutId, name, url, urlInput, true, false, false);
+                    }
+                } 
+                else if (iconType === 'letter') {
+                    // Letra inicial
+                    shortcutElement.classList.remove('folder');
+                    iconContainer.innerHTML = `<span class="letter-fallback">${name.charAt(0).toUpperCase()}</span>`;
+                    updateShortcutInStorage(currentShortcutId, name, url, null, false, true, false);
+                } 
+                else {
+                    // Favicon automático
+                    shortcutElement.classList.remove('folder');
+                    getFavicon(url).then(faviconUrl => {
+                        iconContainer.innerHTML = faviconUrl ? 
+                            `<img src="${faviconUrl}" alt="${name}" onerror="this.parentElement.innerHTML = '<span class=\'letter-fallback\'>${name.charAt(0).toUpperCase()}</span>'">` : 
+                            `<span class="letter-fallback">${name.charAt(0).toUpperCase()}</span>`;
+                        updateShortcutInStorage(currentShortcutId, name, url, faviconUrl, false, false, false);
+                    });
+                }
+            }
+            
+            closeEditModal();
+        }
+        
+        function updateShortcutInStorage(id, name, url, icon, isCustom, useLetter, isFolder) {
+            let shortcuts = JSON.parse(localStorage.getItem('shortcuts')) || [];
+            const index = shortcuts.findIndex(s => s.id === id);
+            
+            if (index !== -1) {
+                shortcuts[index] = {
+                    ...shortcuts[index],
+                    id,
+                    name,
+                    url: isFolder ? null : url,
+                    favicon: !isCustom && !useLetter && !isFolder ? icon : null,
+                    customIcon: isCustom ? icon : null,
+                    useLetter,
+                    isFolder: isFolder || false,
+                    shortcuts: isFolder ? (shortcuts[index].shortcuts || []) : null,
+                    order: shortcuts[index].order
+                };
+            } else {
+                shortcuts.push({
+                    id,
+                    name,
+                    url: isFolder ? null : url,
+                    favicon: !isCustom && !useLetter && !isFolder ? icon : null,
+                    customIcon: isCustom ? icon : null,
+                    useLetter,
+                    isFolder: isFolder || false,
+                    shortcuts: isFolder ? [] : null,
+                    order: shortcuts.length
+                });
+            }
+            
+            localStorage.setItem('shortcuts', JSON.stringify(shortcuts));
+        }
+        
+        function updateShortcutIcons() {
+            const iconColor = getComputedStyle(document.documentElement).getPropertyValue('--icon-color').trim();
+            document.querySelectorAll('.shortcut-icon').forEach(icon => {
+                if (!icon.closest('.folder')) {
+                    icon.style.backgroundColor = iconColor;
+                }
+            });
+        }
+        
+        // Función para eliminar un acceso directo de localStorage
+        function removeShortcut(id) {
+            let shortcuts = JSON.parse(localStorage.getItem('shortcuts')) || [];
+            
+            // Si es una carpeta, eliminar también los accesos directos dentro de ella
+            const folder = shortcuts.find(s => s.id === id && s.isFolder);
+            if (folder && folder.shortcuts) {
+                shortcuts = shortcuts.filter(s => !folder.shortcuts.includes(s.id));
+            }
+            
+            // Eliminar el acceso directo o carpeta
+            shortcuts = shortcuts.filter(shortcut => shortcut.id !== id);
+            localStorage.setItem('shortcuts', JSON.stringify(shortcuts));
+        }
+        
+        // Función para cargar los accesos directos guardados
+        function loadShortcuts() {
+            const shortcuts = JSON.parse(localStorage.getItem('shortcuts')) || [];
+            const container = document.getElementById('shortcutsContainer');
+            
+            // Ordenar por el orden guardado
+            shortcuts.sort((a, b) => (a.order || 0) - (b.order || 0));
+            
+            // Agregar algunos accesos directos por defecto si no hay ninguno guardado
+            if (shortcuts.length === 0) {
+                const defaultShortcuts = [
+                    { 
+                        id: 'shortcut-1',
+                        name: 'YouTube', 
+                        url: 'https://youtube.com',
+                        favicon: 'https://www.google.com/s2/favicons?domain=youtube.com&sz=128',
+                        order: 0
+                    },
+                    { 
+                        id: 'shortcut-2',
+                        name: 'Gmail', 
+                        url: 'https://mail.google.com',
+                        favicon: 'https://www.google.com/s2/favicons?domain=mail.google.com&sz=128',
+                        order: 1
+                    },
+                    { 
+                        id: 'shortcut-3',
+                        name: 'Classroom', 
+                        url: 'https://classroom.google.com',
+                        favicon: 'https://www.google.com/s2/favicons?domain=classroom.google.com&sz=128',
+                        order: 2
+                    },
+                    { 
+                        id: 'shortcut-4',
+                        name: 'Canva', 
+                        url: 'https://canva.com',
+                        favicon: 'https://www.google.com/s2/favicons?domain=canva.com&sz=128',
+                        order: 3
+                    },
+                    { 
+                        id: 'shortcut-5',
+                        name: 'Instagram', 
+                        url: 'https://instagram.com',
+                        favicon: 'https://www.google.com/s2/favicons?domain=instagram.com&sz=128',
+                        order: 4
+                    }
+                ];
+                
+                localStorage.setItem('shortcuts', JSON.stringify(defaultShortcuts));
+                loadShortcuts(); // Recargar con los valores por defecto
+                return;
+            }
+            
+            container.innerHTML = '';
+            shortcuts.forEach(shortcut => {
+                if (shortcut.isFolder) {
+                    // Crear elemento de carpeta
+                    const folderElement = document.createElement('div');
+                    folderElement.className = 'shortcut folder';
+                    folderElement.dataset.id = shortcut.id;
+                    folderElement.draggable = true;
+                    
+                    folderElement.innerHTML = `
+                        <div class="shortcut-icon">
+                            <i class="fas fa-folder folder-icon"></i>
+                        </div>
+                        <span class="shortcut-name">${shortcut.name}</span>
+                        <button class="shortcut-menu" onclick="showContextMenu(event, '${shortcut.id}')"><i class="fas fa-ellipsis-v"></i></button>
+                    `;
+                    
+                    folderElement.addEventListener('click', function(e) {
+                        if (!e.target.classList.contains('shortcut-menu')) {
+                            openFolder(shortcut.id);
+                        }
+                    });
+                    
+                    container.appendChild(folderElement);
+                } else {
+                    // Crear elemento de acceso directo normal
+                    const shortcutElement = document.createElement('a');
+                    shortcutElement.className = 'shortcut';
+                    shortcutElement.href = shortcut.url || '#';
+                    shortcutElement.target = '_blank';
+                    shortcutElement.dataset.id = shortcut.id;
+                    shortcutElement.draggable = true;
+                    
+                    let iconContent = '';
+                    if (shortcut.customIcon) {
+                        iconContent = `<img src="${shortcut.customIcon}" alt="${shortcut.name}">`;
+                    } else if (shortcut.useLetter) {
+                        iconContent = `<span class="letter-fallback">${shortcut.name.charAt(0).toUpperCase()}</span>`;
+                    } else if (shortcut.favicon) {
+                        iconContent = `<img src="${shortcut.favicon}" alt="${shortcut.name}" onerror="this.parentElement.innerHTML = '<span class=\'letter-fallback\'>${shortcut.name.charAt(0).toUpperCase()}</span>'">`;
+                    } else {
+                        iconContent = `<span class="letter-fallback">${shortcut.name.charAt(0).toUpperCase()}</span>`;
+                    }
+                    
+                    shortcutElement.innerHTML = `
+                        <div class="shortcut-icon">
+                            ${iconContent}
+                        </div>
+                        <span class="shortcut-name">${shortcut.name}</span>
+                        <button class="shortcut-menu" onclick="showContextMenu(event, '${shortcut.id}')"><i class="fas fa-ellipsis-v"></i></button>
+                    `;
+                    
+                    container.appendChild(shortcutElement);
+                }
+            });
+            
+            // Configurar eventos de drag & drop para los nuevos elementos
+            document.querySelectorAll('.shortcut').forEach(shortcut => {
+                shortcut.addEventListener('dragstart', handleDragStart);
+                shortcut.addEventListener('dragend', handleDragEnd);
+            });
+        }
+        
+        // ===== FUNCIONES PARA EL REPRODUCTOR DE MÚSICA =====
+        function openMusicModal() {
+            document.getElementById('addMusicModal').style.display = 'flex';
+            document.getElementById('musicTitle').focus();
+        }
+        
+        function closeMusicModal() {
+            document.getElementById('addMusicModal').style.display = 'none';
+            document.getElementById('musicTitle').value = '';
+            document.getElementById('musicUpload').value = '';
+            document.getElementById('musicUrl').value = '';
+        }
+        
+        function openEditMusicModal(musicId) {
+            currentMusicId = musicId;
+            const playlist = JSON.parse(localStorage.getItem('playlist')) || [];
+            const song = playlist.find(s => s.id === musicId);
+            
+            if (song) {
+                document.getElementById('editMusicTitle').value = song.title;
+                document.getElementById('editMusicModal').style.display = 'flex';
+            }
+        }
+        
+        function closeEditMusicModal() {
+            document.getElementById('editMusicModal').style.display = 'none';
+            currentMusicId = null;
+        }
+        
+        function setupMusicPlayer() {
+            const audio = document.getElementById('audioPlayer');
+            const playPauseBtn = document.getElementById('playPauseBtn');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const currentTimeEl = document.getElementById('currentTime');
+            const durationEl = document.getElementById('duration');
+            
+            // Event listeners
+            playPauseBtn.addEventListener('click', togglePlay);
+            prevBtn.addEventListener('click', prevSong);
+            nextBtn.addEventListener('click', nextSong);
+            audio.addEventListener('timeupdate', updateProgress);
+            audio.addEventListener('ended', nextSong);
+            progressContainer.addEventListener('click', setProgress);
+            
+            // Función para alternar entre play/pause
+            function togglePlay() {
+                if (isPlaying) {
+                    pauseAudio();
+                } else {
+                    playAudio();
+                }
+            }
+            
+            function playAudio() {
+                audio.play()
+                    .then(() => {
+                        isPlaying = true;
+                        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                        
+                        // Inicializar AudioContext si es necesario
+                        if (!audioContext) {
+                            initAudioContext();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al reproducir:', error);
+                        isPlaying = false;
+                        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                    });
+            }
+            
+            function pauseAudio() {
+                audio.pause();
+                isPlaying = false;
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+            }
+            
+            function initAudioContext() {
+                try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    audioContext = new AudioContext();
+                    const source = audioContext.createMediaElementSource(audio);
+                    source.connect(audioContext.destination);
+                } catch (e) {
+                    console.error('Error al inicializar AudioContext:', e);
+                }
+            }
+            
+            // Función para actualizar la barra de progreso
+            function updateProgress() {
+                const { duration, currentTime } = audio;
+                const progressPercent = (currentTime / duration) * 100;
+                progressBar.style.width = `${progressPercent}%`;
+                
+                // Actualizar tiempos
+                currentTimeEl.textContent = formatTime(currentTime);
+                if (duration) {
+                    durationEl.textContent = formatTime(duration);
+                }
+            }
+            
+            // Función para establecer el progreso al hacer clic
+            function setProgress(e) {
+                const width = this.clientWidth;
+                const clickX = e.offsetX;
+                const duration = audio.duration;
+                audio.currentTime = (clickX / width) * duration;
+            }
+            
+            // Función para formatear el tiempo (mm:ss)
+            function formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            }
+        }
+        
+        function addMusicToPlaylist() {
+            const title = document.getElementById('musicTitle').value.trim();
+            const fileInput = document.getElementById('musicUpload');
+            const urlInput = document.getElementById('musicUrl').value.trim();
+            
+            if (!title) {
+                alert('Por favor ingresa un título para la canción');
+                return;
+            }
+            
+            let audioSrc = '';
+            
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                audioSrc = URL.createObjectURL(file);
+            } else if (urlInput) {
+                audioSrc = urlInput;
+            } else {
+                alert('Por favor selecciona un archivo de audio o ingresa una URL');
+                return;
+            }
+            
+            const musicId = 'music-' + Date.now();
+            const playlist = JSON.parse(localStorage.getItem('playlist')) || [];
+            
+            playlist.push({
+                id: musicId,
+                title,
+                src: audioSrc,
+                order: playlist.length
+            });
+            
+            localStorage.setItem('playlist', JSON.stringify(playlist));
+            loadPlaylist();
+            closeMusicModal();
+        }
+        
+        function saveMusicChanges() {
+            const title = document.getElementById('editMusicTitle').value.trim();
+            
+            if (!title) {
+                alert('Por favor ingresa un título para la canción');
+                return;
+            }
+            
+            const playlist = JSON.parse(localStorage.getItem('playlist')) || [];
+            const index = playlist.findIndex(s => s.id === currentMusicId);
+            
+            if (index !== -1) {
+                playlist[index].title = title;
+                localStorage.setItem('playlist', JSON.stringify(playlist));
+                loadPlaylist();
+                
+                // Actualizar el título actual si es la canción que está sonando
+                const audio = document.getElementById('audioPlayer');
+                if (audio.src === playlist[index].src) {
+                    document.getElementById('currentSong').textContent = title;
+                }
+            }
+            
+            closeEditMusicModal();
+        }
+        
+        function deleteMusic(musicId) {
+            if (confirm('¿Eliminar esta canción de la lista de reproducción?')) {
+                const playlist = JSON.parse(localStorage.getItem('playlist')) || [];
+                const index = playlist.findIndex(s => s.id === musicId);
+                
+                if (index !== -1) {
+                    // Si la canción que se está reproduciendo es la que se va a eliminar
+                    const audio = document.getElementById('audioPlayer');
+                    if (audio.src === playlist[index].src) {
+                        audio.pause();
+                        isPlaying = false;
+                        document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-play"></i>';
+                        document.getElementById('currentSong').textContent = 'Selecciona una canción';
+                    }
+                    
+                    playlist.splice(index, 1);
+                    
+                    // Reordenar las canciones restantes
+                    playlist.forEach((song, i) => {
+                        song.order = i;
+                    });
+                    
+                    localStorage.setItem('playlist', JSON.stringify(playlist));
+                    loadPlaylist();
+                }
+            }
+        }
+        
+        // Función para cargar la lista de reproducción
+        function loadPlaylist() {
+            const playlist = JSON.parse(localStorage.getItem('playlist')) || [];
+            const playlistEl = document.getElementById('playlist');
+            
+            // Ordenar por el orden guardado
+            playlist.sort((a, b) => (a.order || 0) - (b.order || 0));
+            
+            // Agregar algunas canciones por defecto si no hay ninguna
+            if (playlist.length === 0) {
+                const defaultPlaylist = [
+                    {
+                        id: 'music-1',
+                        title: "Música Relajante",
+                        src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+                        order: 0
+                    },
+                    {
+                        id: 'music-2',
+                        title: "Sonidos de Naturaleza",
+                        src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+                        order: 1
+                    },
+                    {
+                        id: 'music-3',
+                        title: "Música Instrumental",
+                        src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+                        order: 2
+                    }
+                ];
+                
+                localStorage.setItem('playlist', JSON.stringify(defaultPlaylist));
+                loadPlaylist(); // Recargar con valores por defecto
+                return;
+            }
+            
+            playlistEl.innerHTML = '';
+            playlist.forEach((song, index) => {
+                const songEl = document.createElement('div');
+                songEl.className = 'playlist-item';
+                songEl.textContent = song.title;
+                songEl.dataset.id = song.id;
+                songEl.draggable = true;
+                
+                const actionsEl = document.createElement('div');
+                actionsEl.className = 'playlist-item-actions';
+                actionsEl.innerHTML = `
+                    <button onclick="event.stopPropagation(); openEditMusicModal('${song.id}')"><i class="fas fa-edit"></i></button>
+                    <button onclick="event.stopPropagation(); deleteMusic('${song.id}')"><i class="fas fa-trash"></i></button>
+                `;
+                
+                songEl.appendChild(actionsEl);
+                songEl.addEventListener('click', () => loadSong(index));
+                
+                // Eventos de drag & drop
+                songEl.addEventListener('dragstart', function(e) {
+                    draggedMusic = this;
+                    this.classList.add('dragging');
+                    e.dataTransfer.setData('text/plain', this.dataset.id);
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                
+                songEl.addEventListener('dragend', function() {
+                    this.classList.remove('dragging');
+                    draggedMusic = null;
+                });
+                
+                playlistEl.appendChild(songEl);
+            });
+        }
+        
+        // Función para cargar una canción
+        function loadSong(index) {
+            const playlist = JSON.parse(localStorage.getItem('playlist')) || [];
+            
+            if (index >= 0 && index < playlist.length) {
+                currentSongIndex = index;
+                const audio = document.getElementById('audioPlayer');
+                const currentSongEl = document.getElementById('currentSong');
+                const playlistItems = document.querySelectorAll('.playlist-item');
+                
+                // Actualizar la canción actual
+                currentSongEl.textContent = playlist[index].title;
+                audio.src = playlist[index].src;
+                
+                // Resaltar la canción actual en la lista de reproducción
+                playlistItems.forEach((item, i) => {
+                    if (i === index) {
+                        item.classList.add('active');
+                    } else {
+                        item.classList.remove('active');
+                    }
+                });
+                
+                // Reproducir si estaba reproduciendo
+                if (isPlaying) {
+                    audio.play().catch(e => {
+                        console.error('Error al reproducir:', e);
+                        isPlaying = false;
+                        document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-play"></i>';
+                    });
+                }
+            }
+        }
+        
+        // Función para la siguiente canción
+        function nextSong() {
+            const playlist = JSON.parse(localStorage.getItem('playlist')) || [];
+            currentSongIndex++;
+            if (currentSongIndex >= playlist.length) currentSongIndex = 0;
+            loadSong(currentSongIndex);
+        }
+        
+        // Función para la canción anterior
+        function prevSong() {
+            const playlist = JSON.parse(localStorage.getItem('playlist')) || [];
+            currentSongIndex--;
+            if (currentSongIndex < 0) currentSongIndex = playlist.length - 1;
+            loadSong(currentSongIndex);
+        }
+        
+        // Función para guardar un acceso directo en localStorage
+        function saveShortcut(id, name, url, favicon, customIcon = null, useLetter = false, isFolder = false) {
+            let shortcuts = JSON.parse(localStorage.getItem('shortcuts')) || [];
+            
+            const shortcutData = {
+                id,
+                name,
+                url: isFolder ? null : url,
+                favicon: !customIcon && !useLetter && !isFolder ? favicon : null,
+                customIcon: customIcon || null,
+                useLetter,
+                isFolder,
+                shortcuts: isFolder ? [] : null,
+                order: shortcuts.length
+            };
+            
+            shortcuts.push(shortcutData);
+            localStorage.setItem('shortcuts', JSON.stringify(shortcuts));
+        }
+    </script>
+</body>
+</html>
